@@ -1,0 +1,7 @@
+".\Objects\CT_Main.obj",
+".\Objects\Common.obj",
+".\Objects\Delay.obj",
+".\Objects\STARTUP.obj" 
+TO ".\Objects\CT_v1.0" 
+PRINT(".\Listings\CT_v1.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

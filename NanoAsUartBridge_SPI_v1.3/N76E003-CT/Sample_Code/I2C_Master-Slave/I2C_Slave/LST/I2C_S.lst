@@ -1,0 +1,289 @@
+C51 COMPILER V9.60.0.0   I2C_S                                                             08/19/2023 16:28:01 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE I2C_S
+OBJECT MODULE PLACED IN .\Output\I2C_S.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Code\I2C_S.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\..\Include) DEFINE(FO
+                    -SC_160000) DEBUG OBJECTEXTEND PRINT(.\LST\I2C_S.lst) TABS(2) OBJECT(.\Output\I2C_S.obj)
+
+line level    source
+
+   1          /*--------------------------------------------------------------------------------------------------------
+             --*/
+   2          /*                                                                                                        
+             - */
+   3          /* Copyright(c) 2017 Nuvoton Technology Corp. All rights reserved.                                        
+             - */
+   4          /*                                                                                                        
+             - */
+   5          /*--------------------------------------------------------------------------------------------------------
+             --*/
+   6          
+   7          //********************************************************************************************************
+             -***
+   8          //  Website: http://www.nuvoton.com
+   9          //  E-Mail : MicroC-8bit@nuvoton.com
+  10          //  Date   : Jan/21/2017
+  11          //********************************************************************************************************
+             -***
+  12          
+  13          //********************************************************************************************************
+             -***
+  14          //  File Function: N76E003 GPIO demo code
+  15          //********************************************************************************************************
+             -***
+  16          #include "N76E003.h"
+  17          //#include "I2C.h"
+  18          
+  19          // i2c variable start //
+  20          #define I2C_CLOCK            13
+  21          #define EEPROM_SLA           0x15      //0x15 //0x20  //0xA4  //   // 
+  22          
+  23          
+  24          //UINT8 data_received[5], data_num = 0;
+  25          void Init_I2C(void);
+  26          // i2c variable end//
+  27          
+  28          
+  29          
+  30          unsigned char temp _at_ 0x08;
+  31          unsigned char idata itemp _at_ 0x80;
+  32          unsigned char xdata xtemp _at_ 0x80;
+  33          
+  34          uint16_t findMax(uint16_t arr[], uint8_t size);
+  35          double map(long x, float in_min, float in_max, float out_min, float out_max);
+  36          
+  37          #define CTSampleSize  10
+  38          #define avgSamples    50
+  39          uint16_t CT[CTSampleSize]={0,};
+  40          //uint16_t CT2[CT1SampleSize]={0,};
+  41          //uint16_t CT3[CT1SampleSize]={0,};
+  42          
+  43          signed int adcval = 0;
+  44          uint32_t adcAvg = 0;
+  45          uint16_t finalADCAVG = 0;
+C51 COMPILER V9.60.0.0   I2C_S                                                             08/19/2023 16:28:01 PAGE 2   
+
+  46          //double mapingVal = 0;
+  47          uint8_t sampleCounter = 0;
+  48          uint16_t x = 0x24A6;
+  49          /*==========================================================================*/
+  50          void main (void) 
+  51          {
+  52   1        uint8_t a=0;
+  53   1          InitialUART1_Timer3(115200);
+  54   1          TI_1 = 1;
+  55   1          Enable_ADC_AIN1;            // Enable AIN1 P3.0 as ADC input, Find in "Function_define.h" - "ADC INIT"
+  56   1        
+  57   1        /* Initial I2C function */
+  58   1          Init_I2C();                                 //initial I2C circuit
+  59   1      
+  60   1          
+  61   1          while(1)
+  62   1          {
+  63   2            //printf("H %x  %x \n",((x & 0xff00)>>8),(x & 0x00ff) );
+  64   2            
+  65   2            
+  66   2            adcval = 0;
+  67   2            //adcAvg = 0;
+  68   2            //printf("\n hello world");
+  69   2            //for(i=0; i<10; i++){
+  70   2              for(a=0; a<CTSampleSize; a++){
+  71   3                
+  72   3                clr_ADCF;
+  73   3                set_ADCS;                 // ADC start trig signal
+  74   3                while(ADCF == 0);
+  75   3                adcval = ADCRH;
+  76   3                adcval = adcval << 4;
+  77   3                adcval |= (ADCRL & 0x0f);
+  78   3                //adcAvg += (float)adcval;
+  79   3                //printf("%d /n",adcval);
+  80   3                CT[a] = adcval;
+  81   3                Timer0_Delay1ms(2);
+  82   3                //Timer0_Delay100us(2);
+  83   3                }
+  84   2              //printf("\n CT1 ARR :");
+  85   2              //for(a=0; a<CTSampleSize; a++){
+  86   2                //  printf("%d ", CT[a]); 
+  87   2                //}
+  88   2              //printf("max value from array before in :%d\n",findMax(CT, CTSampleSize));
+  89   2                adcAvg = (adcAvg + findMax(CT, CTSampleSize));
+  90   2                
+  91   2                
+  92   2                sampleCounter++;
+  93   2                //printf("counter : %d\n",sampleCounter);
+  94   2            //}
+  95   2            //  printf("avg value before if %d\n",adcAvg);  
+  96   2            if(sampleCounter >= avgSamples){
+  97   3              Timer0_Delay1ms(20);
+  98   3              sampleCounter = 0;
+  99   3            //  printf("avg value %d\n",adcAvg);
+ 100   3              finalADCAVG = (uint16_t)adcAvg/avgSamples;
+ 101   3              //finalADCAVG = adcval;
+ 102   3              //finalADCAVG = (uint16_t)1234;
+ 103   3              //mapingVal = (double) map(finalADCAVG,0,4000,0,255);
+ 104   3              adcAvg = 0;
+ 105   3              
+ 106   3              ////////////////// for testing///////////
+ 107   3              
+C51 COMPILER V9.60.0.0   I2C_S                                                             08/19/2023 16:28:01 PAGE 3   
+
+ 108   3              
+ 109   3              
+ 110   3              /////////////////////////////////////////
+ 111   3              //printf(" current Consume : %x \n",mapingVal);
+ 112   3            }
+ 113   2            //printf("\n finalADCAVG value : %d  ",finalADCAVG );
+ 114   2            
+ 115   2            
+ 116   2        }
+ 117   1      }
+ 118          
+ 119          
+ 120          
+ 121          uint16_t findMax(uint16_t arr[], uint8_t size){
+ 122   1        int i=0;
+ 123   1        uint16_t max=0;
+ 124   1        for (i=0; i<size; i++){
+ 125   2          if(arr[i] > max){
+ 126   3            max = arr[i];
+ 127   3          }
+ 128   2        }
+ 129   1        return max;
+ 130   1      }
+ 131          /*
+ 132          double map(long x, float in_min, float in_max, float out_min, float out_max) {
+ 133              double val = (double)(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+ 134              //printf("%f \n", val);
+ 135            return val;
+ 136          }
+ 137          */
+ 138          // for i2c// start
+ 139          
+ 140          void Init_I2C(void)
+ 141          {
+ 142   1          P13_Quasi_Mode;                         //set SCL (P13) is Quasi mode
+ 143   1          P14_Quasi_Mode;                         //set SDA (P14) is Quasi mode
+ 144   1          
+ 145   1          SDA = 1;                                //set SDA and SCL pins high
+ 146   1          SCL = 1;
+ 147   1          
+ 148   1          set_P0SR_6;                             //set SCL (P06) is  Schmitt triggered input select.
+ 149   1          
+ 150   1          set_EI2C;                               //enable I2C interrupt by setting IE1 bit 0
+ 151   1          set_EA;
+ 152   1      
+ 153   1          I2ADDR = EEPROM_SLA;                    //define own slave address
+ 154   1          set_I2CEN;                              //enable I2C circuit
+ 155   1          set_AA;
+ 156   1      }
+ 157          
+ 158          void I2C_ISR(void) interrupt 6
+ 159          {
+ 160   1        //printf("\n i2c interrupt happend %x", I2STAT);
+ 161   1          switch (I2STAT)
+ 162   1          {
+ 163   2              case 0x00:
+ 164   2                  STO = 1;
+ 165   2                  break;
+ 166   2      
+ 167   2              case 0x60:
+ 168   2                  AA = 1;
+ 169   2                  //P3 = 0x60;
+C51 COMPILER V9.60.0.0   I2C_S                                                             08/19/2023 16:28:01 PAGE 4   
+
+ 170   2                  //printf("\ncase 0x60");
+ 171   2                  //data_received[data_num] = I2DAT;
+ 172   2                  //printf("\ndata receive inb 0x60 : %x", data_received[data_num]);
+ 173   2                  break;
+ 174   2              
+ 175   2              case 0x68:
+ 176   2                  P02 = 0;
+ 177   2                  while(1);
+ 178   2                  break;
+ 179   2      
+ 180   2              case 0x80:
+ 181   2                  //P3 = 0x80;
+ 182   2                  //printf("\ndata received\n");
+ 183   2                  //I2C_start();
+ 184   2                  //I2C_write_DATA(0x25);
+ 185   2                  //I2C_stop();
+ 186   2              
+ 187   2                  //data_received[data_num] = I2DAT;
+ 188   2                  //printf("\ndata receive in 0x80 : %x", data_received[data_num]);
+ 189   2              /*
+ 190   2                  data_num++;
+ 191   2      
+ 192   2                  if (data_num == 34)
+ 193   2                      AA = 0;
+ 194   2                  else
+ 195   2                      AA = 1;
+ 196   2              */
+ 197   2                  break;
+ 198   2      
+ 199   2              case 0x88:
+ 200   2                  //P3 = 0x88;
+ 201   2                  //data_received[data_num] = I2DAT;
+ 202   2                  //data_num = 0;
+ 203   2                  AA = 1;
+ 204   2                  break;
+ 205   2      
+ 206   2              case 0xA0:
+ 207   2                  //P3 = 0xA0;
+ 208   2                  AA = 1;
+ 209   2                  break;
+ 210   2      
+ 211   2              case 0xA8:
+ 212   2                  //P3 = 0xA0;
+ 213   2                  //I2DAT = data_received[data_num];
+ 214   2                  //printf("\n send data from 0xA8 :%d",finalADCAVG);
+ 215   2                
+ 216   2                  //printf("\n first byte: %02x", (finalADCAVG & 0xff00));
+ 217   2                  //printf("\n first byte: %02x", (finalADCAVG & 0x00ff));
+ 218   2                  //I2DAT = mapingVal;
+ 219   2              
+ 220   2              
+ 221   2                  I2DAT = (unsigned int )finalADCAVG/100; // ((finalADCAVG & 0xff00)>>8);
+ 222   2                  clr_SI;
+ 223   2                  while (!SI);                            //Check SI set or not
+ 224   2                  I2DAT = (unsigned int )finalADCAVG%100; // (finalADCAVG & 0x00ff);
+ 225   2                  // data_num++;
+ 226   2                  AA = 1;
+ 227   2                  break;
+ 228   2              
+ 229   2              case 0xB8:
+ 230   2                  //P3 = 0xB8;
+ 231   2                  //I2DAT = data_received[data_num];
+C51 COMPILER V9.60.0.0   I2C_S                                                             08/19/2023 16:28:01 PAGE 5   
+
+ 232   2                  //data_num++;
+ 233   2                  AA = 1;
+ 234   2                  break;
+ 235   2      
+ 236   2              case 0xC0:
+ 237   2                  AA = 1;
+ 238   2                  break; 
+ 239   2      
+ 240   2              case 0xC8:
+ 241   2                  //P3 = 0xC8;
+ 242   2                  AA = 1;
+ 243   2                  break;        
+ 244   2          }
+ 245   1      
+ 246   1          SI = 0;
+ 247   1      //    while(STO);
+ 248   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    473    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     31       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
